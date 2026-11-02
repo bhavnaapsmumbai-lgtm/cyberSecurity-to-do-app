@@ -1,3 +1,4 @@
+
 package com.example.to_do_list;
 
 import android.app.Activity;
@@ -30,9 +31,9 @@ public class MainActivity extends Activity {
         addButton = findViewById(R.id.addButton);
         taskList = findViewById(R.id.taskList);
 
-        tasks = new ArrayList<>();
-
         preferences = getSharedPreferences("ToDoData", MODE_PRIVATE);
+
+        tasks = new ArrayList<>();
 
         loadTasks();
 
@@ -46,7 +47,7 @@ public class MainActivity extends Activity {
 
         addButton.setOnClickListener(v -> {
 
-            String task = taskInput.getText().toString();
+            String task = taskInput.getText().toString().trim();
 
             if (!task.isEmpty()) {
 
