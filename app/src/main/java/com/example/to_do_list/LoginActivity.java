@@ -16,7 +16,7 @@ import com.google.firebase.auth.FirebaseAuth;
 public class LoginActivity extends AppCompatActivity {
 
     EditText emailInput, passwordInput;
-    Button loginButton, registerButton;
+    Button loginButton, registerButton, forgotPasswordButton;
     FirebaseAuth auth;
 
     @Override
@@ -36,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.passwordInput);
         loginButton = findViewById(R.id.loginButton);
         registerButton = findViewById(R.id.registerButton);
+        forgotPasswordButton = findViewById(R.id.forgotPasswordButton);
 
         loginButton.setOnClickListener(v -> doLogin());
 
@@ -62,6 +63,8 @@ public class LoginActivity extends AppCompatActivity {
                     .addOnFailureListener(e ->
                             Toast.makeText(this, "Could not create account", Toast.LENGTH_LONG).show());
         });
+
+        forgotPasswordButton.setOnClickListener(v -> sendResetEmail());
     }
 
     private void doLogin() {
@@ -74,6 +77,23 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnSuccessListener(result -> openTodoList())
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Login failed", Toast.LENGTH_LONG).show());
+    }
+
+    private void sendResetEmail() {
+        String email = emailInput.getText().toString().trim();
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailInput.setError("Enter your email first");
+            return;
+        }
+
+        // The same message is shown whether or not the email is registered,
+        // so the app does not reveal which emails have accounts
+        auth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task ->
+                        Toast.makeText(this,
+                                "If an account exists for that email, a reset link has been sent",
+                                Toast.LENGTH_LONG).show());
     }
 
     private boolean isValid(String email, String password) {
