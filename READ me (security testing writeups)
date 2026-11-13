@@ -1,29 +1,30 @@
-^_^ Security Testing
+# Security Testing
 
 This document lists the threats I considered for this app, the control that addresses each one, how I tested it, and what happened.
 
-^_^ Test log
+## Test log
 
 | # | Threat | Control | How I tested it | Result |
 |---|--------|---------|-----------------|--------|
 | 1 | A logged-in user reads another user's tasks | Firestore security rules: access to `users/{userId}/tasks` is allowed only when the signed-in user's ID matches `userId` | Created tasks in Account A, logged out, created Account B on the same emulator, and checked B's task list | Account B saw an empty list. Account A's tasks were not visible. **Pass** |
+| 2 | Oversized or malformed task data written to the database | Firestore rules: a task may contain only `text` and `createdAt`, and `text` must be a string of 1 to 200 characters. The app's input box also stops at 200 characters | Published the rules, added normal tasks in the app, and typed until the input box stopped at 200 characters | Normal tasks save and the box stops at 200. The rule's rejection of bad data has not been tested directly yet (Rules Playground test planned). **Partial** |
 
-^_^ Controls in place
+## Controls in place
 
 - Firebase Authentication handles password storage (passwords are never stored in plain text by the app).
 - Input validation on login: email format and minimum password length.
 - `MainActivity` is not exported, so other apps cannot open it directly.
 - `MainActivity` checks for a logged-in user and returns to the login screen if there isn't one.
 - Login errors are generic and don't reveal whether an email is registered.
+- Firestore rules validate task fields and length (1 to 200 characters).
 
-^_^ Known limitations
+## Known limitations
 
 - No email verification.
 - No "forgot password" feature.
-- No limit on task length in the Firestore rules.
 - Tested only on an emulator, with two accounts.
 
-^_^ Planned tests
+## Planned tests
 
 - Try reading or writing another user's path directly using the Rules Playground in the Firebase console.
-- Try writing very long or malformed task data.
+- Try writing a task longer than 200 characters, or with an extra field, using the Rules Playground, to confirm the server rejects it.
