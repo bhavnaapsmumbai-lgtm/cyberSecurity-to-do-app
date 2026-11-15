@@ -61,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
             auth.createUserWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> openTodoList())
                     .addOnFailureListener(e ->
-                            Toast.makeText(this, "Could not create account", Toast.LENGTH_LONG).show());
+                            Toast.makeText(this,"sorry cuh..couldn't make your account", Toast.LENGTH_LONG).show());
         });
 
         forgotPasswordButton.setOnClickListener(v -> sendResetEmail());
