@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -26,10 +27,14 @@ public class LoginActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
 
-        // If already logged in, skip straight to the to-do list
-        if (auth.getCurrentUser() != null) {
-            openTodoList();
-            return;
+        // Skip login only if the saved user has a verified email
+        FirebaseUser current = auth.getCurrentUser();
+        if (current != null) {
+            if (current.isEmailVerified()) {
+                openTodoList();
+                return;
+            }
+            auth.signOut();
         }
 
         emailInput = findViewById(R.id.emailInput);
@@ -59,9 +64,18 @@ public class LoginActivity extends AppCompatActivity {
             if (!isValid(email, password)) return;
 
             auth.createUserWithEmailAndPassword(email, password)
-                    .addOnSuccessListener(result -> openTodoList())
+                    .addOnSuccessListener(result -> {
+                        FirebaseUser user = result.getUser();
+                        if (user != null) {
+                            user.sendEmailVerification();
+                        }
+                        auth.signOut();
+                        Toast.makeText(this,
+                                "Account created. Check your email, verify it, then log in.",
+                                Toast.LENGTH_LONG).show();
+                    })
                     .addOnFailureListener(e ->
-                            Toast.makeText(this,"sorry cuh..couldn't make your account", Toast.LENGTH_LONG).show());
+                            Toast.makeText(this, "Could not create account", Toast.LENGTH_LONG).show());
         });
 
         forgotPasswordButton.setOnClickListener(v -> sendResetEmail());
@@ -74,7 +88,21 @@ public class LoginActivity extends AppCompatActivity {
         if (!isValid(email, password)) return;
 
         auth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener(result -> openTodoList())
+                .addOnSuccessListener(result -> {
+                    FirebaseUser user = result.getUser();
+                    if (user != null && user.isEmailVerified()) {
+                        openTodoList();
+                    } else {
+                        // Correct password but unverified email: send a new link and sign out
+                        if (user != null) {
+                            user.sendEmailVerification();
+                        }
+                        auth.signOut();
+                        Toast.makeText(this,
+                                "Please verify your email first. We sent a new link.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Login failed", Toast.LENGTH_LONG).show());
     }

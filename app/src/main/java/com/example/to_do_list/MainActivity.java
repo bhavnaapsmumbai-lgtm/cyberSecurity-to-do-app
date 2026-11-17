@@ -43,8 +43,9 @@ public class MainActivity extends Activity {
         auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();
 
-        // Security check: if nobody is logged in, go back to the login screen
-        if (user == null) {
+        // Security check: only a logged-in user with a verified email may continue
+        if (user == null || !user.isEmailVerified()) {
+            auth.signOut();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
