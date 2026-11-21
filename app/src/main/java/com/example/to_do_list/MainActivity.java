@@ -3,6 +3,7 @@ package com.example.to_do_list;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -30,6 +31,7 @@ public class MainActivity extends Activity {
     ListView taskList;
 
     ArrayList<String> tasks;
+    ArrayList<String> taskIds;
     ArrayAdapter<String> adapter;
 
     FirebaseAuth auth;
@@ -65,11 +67,15 @@ public class MainActivity extends Activity {
                 .collection("tasks");
 
         tasks = new ArrayList<>();
+        taskIds = new ArrayList<>();
+
+        // This layout shows a tick box next to each task
         adapter = new ArrayAdapter<>(
                 this,
-                android.R.layout.simple_list_item_1,
+                android.R.layout.simple_list_item_multiple_choice,
                 tasks
         );
+        taskList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
         taskList.setAdapter(adapter);
 
         // Live updates: the list refreshes whenever the cloud data changes
@@ -80,14 +86,33 @@ public class MainActivity extends Activity {
                         return;
                     }
                     tasks.clear();
+                    taskIds.clear();
+                    ArrayList<Boolean> doneStates = new ArrayList<>();
+
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         String text = doc.getString("text");
                         if (text != null) {
                             tasks.add(text);
+                            taskIds.add(doc.getId());
+                            doneStates.add(Boolean.TRUE.equals(doc.getBoolean("done")));
                         }
                     }
+
+                    taskList.clearChoices();
                     adapter.notifyDataSetChanged();
+                    for (int i = 0; i < doneStates.size(); i++) {
+                        taskList.setItemChecked(i, doneStates.get(i));
+                    }
                 });
+
+        // Tapping a task ticks or unticks it, and saves the change
+        taskList.setOnItemClickListener((parent, view, position, id) -> {
+            boolean checked = taskList.isItemChecked(position);
+            tasksRef.document(taskIds.get(position))
+                    .update("done", checked)
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Could not update task", Toast.LENGTH_LONG).show());
+        });
 
         addButton.setOnClickListener(v -> {
             String task = taskInput.getText().toString().trim();
@@ -95,6 +120,7 @@ public class MainActivity extends Activity {
             if (!task.isEmpty()) {
                 Map<String, Object> data = new HashMap<>();
                 data.put("text", task);
+                data.put("done", false);
                 data.put("createdAt", FieldValue.serverTimestamp());
 
                 tasksRef.add(data).addOnFailureListener(e ->
