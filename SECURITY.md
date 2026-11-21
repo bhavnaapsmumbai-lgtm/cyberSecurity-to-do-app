@@ -35,3 +35,17 @@ This document lists the threats I considered for this app, the control that addr
 
 - Test the rules against update and delete requests (only create and read were simulated so far).
 - Test password reset and login against repeated attempts, to see how Firebase limits them.
+
+  ## screenshots^_^
+
+![Login screen](docs/login_page.png)
+
+![Task list with completion ticks](docs/ticked_tasks.png)
+
+## Screenshots of the tests
+
+![Rules Playground: valid write allowed](docs/rules_accepted.png)
+
+![Rules Playground: request denied](docs/rules_denied.png)
+
+![Rules Playground: second request denied](docs/rules_denied1.png)
